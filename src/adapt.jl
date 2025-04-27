@@ -21,14 +21,14 @@ end
 
 function Adapt.adapt_structure(to,v::SplitVectorBlocks)
     own = Adapt.adapt(to,v.own)
-    ghost = Adapt.adapt(to,v.own_ghost)
-
+    ghost = Adapt.adapt(to,v.ghost)
     split_vector_blocks(own,ghost)
 end
 
 function Adapt.adapt_structure(to,v::SplitVector)
     blocks = Adapt.adapt(to,v.blocks)
-    split_vector(blocks,v.permutation)
+    perm = Adapt.adapt(to,v.permutation)
+    split_vector(blocks,perm)
 end
 
 function Adapt.adapt_structure(to,v::JaggedArray)
@@ -39,12 +39,14 @@ end
 
 function Adapt.adapt_structure(to,v::SplitMatrix)
     blocks = Adapt.adapt_structure(to,v.blocks)
-    col_par = v.col_permutation
-    row_par = v.row_permutation
-    split_matrix(blocks,row_par,col_par)
+    col_per = v.col_permutation
+    row_per = v.row_permutation
+    split_matrix(blocks,row_par,col_per)
 end
 
 function Adapt.adapt_structure(to,v::PSparseMatrix)
     matrix_partition = Adapt.adapt_structure(to,v.matrix_partition)
-    PSparseMatrix(matrix_partition,v.row_partition,v.col_partition,v.assembled)
+    col_par = v.col_permutation
+    row_par = v.row_permutation
+    PSparseMatrix(matrix_partition,row_par,col_par,v.assembled)
 end
