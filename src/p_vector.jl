@@ -803,14 +803,13 @@ function Base.copy!(a::PVector,b::PVector)
 end
 
 function Base.copyto!(a::PVector,b::PVector)
-    map(copy!,own_values(a),own_values(b))
-    #if partition(axes(a,1)) === partition(axes(b,1))
-    #    map(copy!,partition(a),partition(b))
-    #elseif matching_own_indices(axes(a,1),axes(b,1))
-    #    map(copy!,own_values(a),own_values(b))
-    #else
-    #    error("Trying to copy a PVector into another one with a different data layout. This case is not implemented yet. It would require communications.")
-    #end
+    if partition(axes(a,1)) === partition(axes(b,1))
+        map(copy!,partition(a),partition(b))
+    elseif matching_own_indices(axes(a,1),axes(b,1))
+        map(copy!,own_values(a),own_values(b))
+    else
+        error("Trying to copy a PVector into another one with a different data layout. This case is not implemented yet. It would require communications.")
+    end
     a
 end
 
