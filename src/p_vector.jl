@@ -1191,6 +1191,22 @@ function LinearAlgebra.dot(a::PVector,b::PVector)
     sum(c)
 end
 
+function setup_non_blocking_dot(a::PVector, b::PVector)
+    partials = map(own_values(a), own_values(b)) do mya, myb
+        zero(eltype(mya)) + zero(eltype(myb))
+    end
+    setup_non_blocking_reduction(partials)
+end
+
+function non_blocking_dot(a::PVector, b::PVector, setup)
+    partials = map(dot, own_values(a), own_values(b))
+    t = non_blocking_reduction(+, partials, setup, destination=:all, init=zero(eltype(a)) + zero(eltype(b)))
+    @fake_async begin
+        getany(fetch(t))
+    end
+end
+
+
 function LinearAlgebra.rmul!(a::PVector,v::Number)
     map(partition(a)) do l
         rmul!(l,v)
