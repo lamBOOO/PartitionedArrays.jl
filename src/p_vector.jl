@@ -1540,13 +1540,44 @@ function renumber(a::PVector,row_partition_2;renumber_local_indices=Val(true))
     PVector(values,row_partition_2)
 end
 
+
 function LinearAlgebra.axpy!(a::Number,x::PVector,y::PVector)
-    y .+= a .* x
+    #y .+= a .* x
+    function axpy_local!(x,y)
+        ni = length(y)
+        @boundscheck @assert length(x) == ni
+        for i in 1:ni
+            @inbounds y[i] += a * x[i]
+        end
+    end
+    function axpy_local!(x::Vector,y::Vector)
+        ni = length(y)
+        @boundscheck @assert length(x) == ni
+        @simd for i in 1:ni
+            @inbounds y[i] += a * x[i]
+        end
+    end
+    foreach(axpy_local!,own_values(x),own_values(y))
     y
 end
 
 function LinearAlgebra.axpby!(a::Number,x::PVector,b::Number,y::PVector)
-    y .= a .* x .+ b .* y
+    #y .= a .* x .+ b .* y
+    function axpby_local!(x,y)
+        ni = length(y)
+        @boundscheck @assert length(x) == ni
+        for i in 1:ni
+            @inbounds y[i] = a * x[i] + b * y[i]
+        end
+    end
+    function axpby_local!(x::Vector,y::Vector)
+        ni = length(y)
+        @boundscheck @assert length(x) == ni
+        @simd for i in 1:ni
+            @inbounds y[i] = a * x[i] + b * y[i]
+        end
+    end
+    foreach(axpby_local!,own_values(x),own_values(y))
     y
 end
 
