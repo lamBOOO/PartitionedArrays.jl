@@ -15,7 +15,7 @@ end
 
 function adapt_tests(distribute)
     parts_per_dir = (2,2)
-    rank = distribute(LinearIndices(parts_per_dir)
+    rank = distribute(LinearIndices(parts_per_dir))
     
     a = [[1,2],[3,4,5],Int[],[3,4]]
     b = JaggedArray(a)
