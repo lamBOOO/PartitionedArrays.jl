@@ -1,8 +1,4 @@
 
-
-
-
-
 <img src="https://github.com/PartitionedArrays/PartitionedArrays.jl/raw/master/assets/logo.png" width="300" title="Logo">
 
 
