@@ -1,5 +1,24 @@
 
 function local_values end
+  
+# Static reduction functions for distance metrics, registered with MPI
+# User-defined reduction operators are currently not supported on non-Intel
+# architectures.
+# See https://github.com/JuliaParallel/MPI.jl/issues/404 and
+# https://juliaparallel.org/MPI.jl/stable/knownissues/ for more details.
+# We use the following approach and register the needed operators:
+# https://github.com/JuliaParallel/MPI.jl/blob/42ed0e80ea54bdc64476b1b2750677dbd288cafa/docs/examples/03-reduce.jl#L37
+import MPI: @RegisterOp
+function _reduce_euclidean(x, y)
+    Distances.eval_reduce(Distances.Euclidean(), x, y)
+end
+@RegisterOp(_reduce_euclidean, Int)
+@RegisterOp(_reduce_euclidean, Float64)
+function _reduce_sqeuclidean(x, y)
+    Distances.eval_reduce(Distances.SqEuclidean(), x, y)
+end
+@RegisterOp(_reduce_sqeuclidean, Int)
+@RegisterOp(_reduce_sqeuclidean, Float64)
 
 function own_values end
 
@@ -1328,9 +1347,15 @@ function distance_eval_body(d,a::PVector,b::PVector)
             return s
         end
     end
-    s = reduce((i,j)->Distances.eval_reduce(d,i,j),
-               partials,
-               init=Distances.eval_start(d, a, b))
+    # Combine partials: use static MPI-op for Euclidean distance
+    init_val = Distances.eval_start(d, a, b)
+    if d isa Distances.Euclidean
+        s = reduce(_reduce_euclidean, partials; init=init_val)
+    elseif d isa Distances.SqEuclidean
+        s = reduce(_reduce_sqeuclidean, partials; init=init_val)
+    else
+        s = reduce((i,j)->Distances.eval_reduce(d,i,j), partials; init=init_val)
+    end
     s
 end
 
