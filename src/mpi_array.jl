@@ -478,18 +478,32 @@ end
 function reduction_impl(op,a::MPIArray,destination;init=nothing)
     T = eltype(a)
     comm = a.comm
-    opr = MPI.Op(op,T)
+    # Attempt to create a user-defined MPI operator; fallback if unsupported
+    # User-defined reduction operators are currently not supported on non-Intel
+    # architectures.
+│   # See https://github.com/JuliaParallel/MPI.jl/issues/404 and
+    # https://juliaparallel.org/MPI.jl/stable/knownissues/ for more details.
+    opr = nothing
+    try
+        opr = MPI.Op(op, T)
+    catch
+        # Fallback: gather all elements and perform local reduction
+        arr = collect(a)
+        if init !== nothing
+            b_item = reduce(op, arr; init=init)
+        else
+            b_item = reduce(op, arr)
+        end
+        return MPIArray(b_item, comm, size(a))
+    end
     item_ref = Ref{T}()
     if destination !== :all
         root = destination-1
         MPI.Reduce!(Ref(a.item),item_ref,opr,root,comm) # TODO Ref needed?
         b_item = item_ref[]
-        if MPI.Comm_rank(comm) == root
-            if init !== nothing
-                b_item = op(b_item,init)
-            end
+        if MPI.Comm_rank(comm) == root && init !== nothing
+            b_item = op(b_item,init)
         end
-        b_item
     else
         MPI.Allreduce!(Ref(a.item),item_ref,opr,comm) # TODO Ref needed?
         b_item = item_ref[]
@@ -510,7 +524,27 @@ function non_blocking_reduction_impl(op, a::MPIArray, setup, destination=:all; i
     @assert destination === :all
     T = eltype(a)
     comm = a.comm
-    opr = MPI.Op(op, T)
+    # Attempt to create a user-defined MPI operator; fallback if unsupported
+    # User-defined reduction operators are currently not supported on non-Intel
+    # architectures.
+│   # See https://github.com/JuliaParallel/MPI.jl/issues/404 and
+    # https://juliaparallel.org/MPI.jl/stable/knownissues/ for more details.
+    opr = nothing
+    try
+        opr = MPI.Op(op, T)
+    catch
+        # Fallback: asynchronous gather and local reduction
+        @fake_async begin
+            arr = collect(a)
+            if init !== nothing
+                b_item = reduce(op, arr; init=init)
+            else
+                b_item = reduce(op, arr)
+            end
+            MPIArray(b_item, comm, size(a))
+        end
+        return
+    end
 
     sendbuf = Ref(a.item)
     recvbuf = setup.recvbuf
