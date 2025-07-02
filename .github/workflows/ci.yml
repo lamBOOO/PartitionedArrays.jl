@@ -20,8 +20,8 @@ jobs:
         version:
           - '1'
         include:
-          - {os: ubuntu-latest, arch: x64}
-          - {os: macos-14,      arch: aarch64}
+          - {version: '1', os: ubuntu-latest, arch: x64}
+          - {version: '1', os: macos-14,      arch: aarch64}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v2
@@ -41,13 +41,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1'
         include:
-          - os: ubuntu-latest
-            arch: x64
-          - os: macos-14
-            arch: aarch64
+          - {version: '1', os: ubuntu-latest, arch: x64}
+          - {version: '1', os: macos-14,      arch: aarch64}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v2
@@ -67,13 +63,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1'
         include:
-          - os: ubuntu-latest
-            arch: x64
-          - os: macos-14
-            arch: aarch64
+          - {version: '1', os: ubuntu-latest, arch: x64}
+          - {version: '1', os: macos-14,      arch: aarch64}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v2
