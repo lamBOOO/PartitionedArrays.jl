@@ -481,7 +481,7 @@ function reduction_impl(op,a::MPIArray,destination;init=nothing)
     # Attempt to create a user-defined MPI operator; fallback if unsupported
     # User-defined reduction operators are currently not supported on non-Intel
     # architectures.
-│   # See https://github.com/JuliaParallel/MPI.jl/issues/404 and
+    # See https://github.com/JuliaParallel/MPI.jl/issues/404 and
     # https://juliaparallel.org/MPI.jl/stable/knownissues/ for more details.
     opr = nothing
     try
