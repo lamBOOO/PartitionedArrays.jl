@@ -298,7 +298,7 @@ function distance_eval_body(d,a::BVector,b::BVector)
         distance_eval_body(d,ai,bi)
     end
     init_val = Distances.eval_start(d, a, b)
-    _combine_distance_partials(d, partials, init_val)
+    reduce_for_distance(d, partials, init_val)
 end
 
 struct BroadcastedBArray{A}

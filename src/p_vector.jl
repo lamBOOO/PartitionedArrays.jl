@@ -1,17 +1,28 @@
 
 function local_values end
 
-function _combine_distance_partials(d, partials, init_val)
-    if eltype(partials) <: Number
-        if d isa Distances.Chebyshev
-            reduce(max, partials; init=init_val)
-        else
-            reduce(+, partials; init=init_val)
-        end
-    else
-        reduce((i, j) -> Distances.eval_reduce(d, i, j), partials; 
-               init=init_val)
-    end
+function reduce_for_distance(d, partials, init)
+    reduce((i, j) -> Distances.eval_reduce(d, i, j), partials; init)
+end
+
+reduce_for_distance(::Distances.Chebyshev, partials, init) =
+    reduce(max, partials; init)
+    
+for T in (Distances.Euclidean,
+          Distances.SqEuclidean,
+          Distances.PeriodicEuclidean,
+          Distances.Cityblock,
+          Distances.TotalVariation,
+          Distances.Minkowski,
+          Distances.Hamming,
+          Distances.ChiSqDist,
+          Distances.KLDivergence,
+          Distances.GenKLDivergence)
+    # all Distances.metrics except Jaccard, RogersTanimoto, CosineDist, 
+    # RenyiDivergence, BrayCurtis, SpanNormDist, since these either operate with
+    # tuples or have a complex reduction logic.
+    @eval reduce_for_distance(::$(T), partials, init) =
+        reduce(+, partials; init)
 end
 
 function own_values end
@@ -1342,7 +1353,7 @@ function distance_eval_body(d,a::PVector,b::PVector)
         end
     end
     init_val = Distances.eval_start(d, a, b)
-    _combine_distance_partials(d, partials, init_val)
+    reduce_for_distance(d, partials, init_val)
 end
 
 # New stuff
