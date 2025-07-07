@@ -1,15 +1,7 @@
 
 function local_values end
 
-"""
-    combine_distance_partials(d, partials, init_val)
-
-Combine the partial distance results `partials` generated on each MPI rank
-using built-in reduction operators whenever possible. For metrics that require
-more complex reductions (e.g. those returning tuples), we fall back to 
-`Distances.eval_reduce`.
-"""
-function combine_distance_partials(d, partials, init_val)
+function _combine_distance_partials(d, partials, init_val)
     if eltype(partials) <: Number
         if d isa Distances.Chebyshev
             reduce(max, partials; init=init_val)
@@ -1350,7 +1342,7 @@ function distance_eval_body(d,a::PVector,b::PVector)
         end
     end
     init_val = Distances.eval_start(d, a, b)
-    combine_distance_partials(d, partials, init_val)
+    _combine_distance_partials(d, partials, init_val)
 end
 
 # New stuff
