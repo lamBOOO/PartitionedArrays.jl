@@ -1,0 +1,4 @@
+steps:
+  - label: "Example test pipeline for BuildKite"
+    key: "begin"
+    command: ".buildkite/example.sh"
